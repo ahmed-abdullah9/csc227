@@ -1,11 +1,11 @@
 import java.io.File;
-
 import java.io.IOException;
 import java.util.*;
 
-public class process {
 
-	int countTimer = 0;
+
+public class process1 implements Comparator<PCB> {
+
 	PriorityQueue<PCB> job = new PriorityQueue<>(new Comparator() {
 
 		@Override
@@ -22,28 +22,32 @@ public class process {
 	}
 
 	);
-	Queue<PCB> ready = new LinkedList<>();
+	PriorityQueue<PCB> ready = new PriorityQueue<>();
 	Queue<Integer> IOQ = new LinkedList<>();
 
 	public int count = 0;
 	double sumtruned = 0;
 	double sum_waiting = 0;
-	int currCPU = 0;
-	int currIO = 0;
+	int currCPU =0;
+	int currIO =0;
 
-	Timer T = new Timer();
+	int timer = 0;
+	Timer myTimer = new Timer();
+	TimerTask task = new TimerTask() {
 
-	TimerTask Task = new TimerTask() {
-
-		@Override
 		public void run() {
-			// TODO Auto-generated method stub
 
-			countTimer++;
-			System.out.println(countTimer);
+			timer += 1;
 		}
+
 	};
 
+	void Strart() {
+
+		myTimer.scheduleAtFixedRate(task, 1, 1);
+	}
+
+	
 	public void read(String x) throws IOException {
 
 		File f = new File(x);
@@ -58,22 +62,22 @@ public class process {
 			p.iD = ss.nextInt();
 			p.arrivalTime = ss.nextInt();
 			while (ss.hasNextInt()) {
-				currCPU = ss.nextInt();
+				currCPU =ss.nextInt();
 				cpu += currCPU;
 				p.cpuBurst.add(currCPU);
-				if (ss.hasNextInt()) {
+				if (ss.hasNextInt()){
 					currIO = ss.nextInt();
-					io += currIO;
+					io +=currIO;
 					p.ioBurst.add(currIO);
 				}
 			}
 			ss.nextLine();
+			
 			p.burstTime = io + cpu;
 			p.watingTime = tt - p.arrivalTime;
 
 			if (p.watingTime < 0)
 				p.watingTime = 0;
-
 			p.turnaroundTime = p.burstTime + p.arrivalTime + p.watingTime;
 			tt = p.turnaroundTime;
 			sumtruned += p.turnaroundTime;
@@ -85,55 +89,70 @@ public class process {
 		ss.close();
 
 	}
-
-	public void FCFS() {
-
-
-		while (!job.isEmpty() || !ready.isEmpty()) {
+	public void FCFS(){
+		
+		while(!job.isEmpty()|| !ready.isEmpty()){
+			
 			jobToReady();
-			if (!ready.isEmpty()) {
+			if(!ready.isEmpty()){
 				PCB p = ready.remove();
 				int x = p.cpuBurst.removeFirst();
-				System.out.print("cpu");
-				while (x-- > 0){
-					System.out.print(".");
+				while(x-- > 0)
 					jobToReady();
-				}
-				System.out.println();
+				
 				IOQ.add(p.ioBurst.removeFirst());
-
+				if(p.cpuBurst.element() != 1)
+					ready.add(p);				
 			}
+			
+			
 		}
-
 	}
 
-	public void jobToReady() {
+	public void jobToReady(){
 		PCB p = job.peek();
-		if (p.arrivalTime <= countTimer)
-			ready.add(job.remove());
-
+		
+		if(p.arrivalTime<=timer){
+			
+		ready.add(job.remove());
+			
+		}
+		
+		
+		
+		
 	}
-
 	public double getAvgT() {
 
 		return sumtruned / count;
 	}
-
-	double getAvWating() {
-		return sum_waiting / count;
+            
+	double getAvWating(){
+		return sum_waiting/count;
 	}
-
+	
+	
+	
+	
 	public static void main(String[] args) throws IOException {
-		process p = new process();
+		process1 p = new process1();
 		p.read("processes.txt");
-		System.out.println("the averg = " + p.getAvgT());
-		System.out.println("the averg wating = " + p.getAvWating());
-		p.FCFS();
-		p.T.scheduleAtFixedRate(p.Task, 1, 1);
-		p.job.remove();
-		p.job.remove();
-		System.out.println(p.job.element().watingTime);
-		System.exit(0);
+
+		System.out.println("the averg = "+p.getAvgT());
+		System.out.println("the averg wating = "+p.getAvWating());
+
+		System.out.println(p.job.element().iD);
+		
 	}
+
+
+	@Override
+	public int compare(PCB o1, PCB o2) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+
+	
 
 }
