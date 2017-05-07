@@ -1,48 +1,35 @@
 import java.io.File;
-
 import java.io.IOException;
 import java.util.*;
 
 public class process {
 
-	int countTimer = 0;
-	PriorityQueue<PCB> job = new PriorityQueue<>(new Comparator() {
-
+	static int countTimer = 0;
+	static Timer timer;
+	
+	PriorityQueue<PCB> job = new PriorityQueue<>(new Comparator<PCB>() {
 		@Override
-		public int compare(Object x, Object y) {
+		public int compare(PCB x, PCB y) {
 			// TODO Auto-generated method stub
-			if (((PCB) x).arrivalTime < ((PCB) y).arrivalTime)
+			if (x.arrivalTime < y.arrivalTime)
 				return -1;
-			if (((PCB) x).arrivalTime > ((PCB) y).arrivalTime)
+			else
 
 				return 1;
 
-			return 0;
 		}
 	}
 
 	);
 	Queue<PCB> ready = new LinkedList<>();
 	Queue<Integer> IOQ = new LinkedList<>();
-
+	static int x =0;
 	public int count = 0;
 	double sumtruned = 0;
 	double sum_waiting = 0;
 	int currCPU = 0;
 	int currIO = 0;
 
-	Timer T = new Timer();
-
-	TimerTask Task = new TimerTask() {
-
-		@Override
-		public void run() {
-			// TODO Auto-generated method stub
-
-			countTimer++;
-			System.out.println(countTimer);
-		}
-	};
 
 	public void read(String x) throws IOException {
 
@@ -87,35 +74,33 @@ public class process {
 	}
 
 	public void FCFS() {
-
-
 		while (!job.isEmpty() || !ready.isEmpty()) {
 			jobToReady();
 			if (!ready.isEmpty()) {
 				PCB p = ready.remove();
 				int x = p.cpuBurst.removeFirst();
-				System.out.print("cpu");
-				while (x-- > 0){
-					System.out.print(".");
-					jobToReady();
-				}
-				System.out.println();
+				while (x-- > 0);
 				IOQ.add(p.ioBurst.removeFirst());
-
+				if (!p.cpuBurst.isEmpty()) {
+					if (p.cpuBurst.element() != 1)
+						ready.add(p);
+				}
 			}
 		}
 
 	}
 
 	public void jobToReady() {
-		PCB p = job.peek();
-		if (p.arrivalTime <= countTimer)
-			ready.add(job.remove());
-
+		if (!job.isEmpty()) {
+			PCB p = job.peek();
+			if (p.arrivalTime <= countTimer) {
+				ready.add(job.remove());
+			}
+		}
+		
 	}
 
 	public double getAvgT() {
-
 		return sumtruned / count;
 	}
 
@@ -124,16 +109,41 @@ public class process {
 	}
 
 	public static void main(String[] args) throws IOException {
+		TimerTask task = new TimerTask() {
+
+			@Override
+			public void run() {
+
+				countTimer++;
+			}
+		};
+		Thread t = new Thread(new Runnable() {
+
+			@Override
+			public void run() {
+				while (true) {
+					try {
+						if (countTimer > 2000) {
+							System.out.println("Counter has reached 20000 now will terminate");
+							timer.cancel();// end the timer
+							break;// end this loop
+						}
+						Thread.sleep(1000);
+					} catch (InterruptedException ex) {
+						ex.printStackTrace();
+					}
+				}
+			}
+		});
+		timer = new Timer("MyTimer");
+		timer.scheduleAtFixedRate(task, 1, 1);
+		t.start();
+
 		process p = new process();
 		p.read("processes.txt");
-		System.out.println("the averg = " + p.getAvgT());
-		System.out.println("the averg wating = " + p.getAvWating());
 		p.FCFS();
-		p.T.scheduleAtFixedRate(p.Task, 1, 1);
-		p.job.remove();
-		p.job.remove();
-		System.out.println(p.job.element().watingTime);
-		System.exit(0);
+		System.out.println("the averg = " + p.getAvgT()+" m/s");
+		System.out.println("the averg wating = " + p.getAvWating()+" m/s");
 	}
 
 }
