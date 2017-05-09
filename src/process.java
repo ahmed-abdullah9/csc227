@@ -1,12 +1,14 @@
+
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+
 
 public class process {
 
 	static int countTimer = 0;
 	static Timer timer;
-	
+
 	PriorityQueue<PCB> job = new PriorityQueue<>(new Comparator<PCB>() {
 		@Override
 		public int compare(PCB x, PCB y) {
@@ -14,7 +16,6 @@ public class process {
 			if (x.arrivalTime < y.arrivalTime)
 				return -1;
 			else
-
 				return 1;
 
 		}
@@ -23,57 +24,70 @@ public class process {
 	);
 	Queue<PCB> ready = new LinkedList<>();
 	Queue<Integer> IOQ = new LinkedList<>();
-	static int x =0;
-	public int count = 0;
+	static public int count = 0;
 	double sumtruned = 0;
 	double sum_waiting = 0;
 	int currCPU = 0;
 	int currIO = 0;
-
+	double allcpu =0;
+	double allio=0;
 
 	public void read(String x) throws IOException {
+		try {
 
-		File f = new File(x);
-		Scanner ss = new Scanner(f);
-		ss.useDelimiter("(;CPU:|;IO:|;| )");
-		int tt = 0;// turnarrount before process
+			File f = new File(x);
+			Scanner ss = new Scanner(f);
+			ss.useDelimiter("(;CPU:|;IO:|;| )");
+			int tt = 0;// turnarround before process
 
-		while (ss.hasNext()) {
-			int cpu = 0;
-			int io = 0;
-			PCB p = new PCB();
-			p.iD = ss.nextInt();
-			p.arrivalTime = ss.nextInt();
-			while (ss.hasNextInt()) {
-				currCPU = ss.nextInt();
-				cpu += currCPU;
-				p.cpuBurst.add(currCPU);
-				if (ss.hasNextInt()) {
-					currIO = ss.nextInt();
-					io += currIO;
-					p.ioBurst.add(currIO);
+			while (ss.hasNext()) {
+				int cpu = 0;
+				int io = 0;
+				PCB p = new PCB();
+				p.iD = ss.nextInt();
+				p.arrivalTime = ss.nextInt();
+				while (ss.hasNextInt()) {
+					currCPU = ss.nextInt();
+					cpu += currCPU;
+					allcpu +=currCPU;
+					p.cpuBurst.add(currCPU);
+					if (ss.hasNextInt()) {
+						currIO = ss.nextInt();
+						io += currIO;
+						allio +=currIO;
+						p.ioBurst.add(currIO);
+					}
 				}
+				ss.nextLine();
+				if( io > cpu)
+					p.Nature = "IO Bound";
+				
+				else
+					p.Nature = "CPU Bound";
+				p.burstTime = io + cpu;
+				p.watingTime = tt - p.arrivalTime;
+				
+				
+				if (p.watingTime < 0)
+					p.watingTime = 0;
+
+				p.turnaroundTime = p.burstTime + p.arrivalTime + p.watingTime;
+				tt = p.turnaroundTime;
+				sumtruned += p.turnaroundTime;
+				sum_waiting += p.watingTime;
+
+				count++;
+				job.add(p);
 			}
-			ss.nextLine();
-			p.burstTime = io + cpu;
-			p.watingTime = tt - p.arrivalTime;
-
-			if (p.watingTime < 0)
-				p.watingTime = 0;
-
-			p.turnaroundTime = p.burstTime + p.arrivalTime + p.watingTime;
-			tt = p.turnaroundTime;
-			sumtruned += p.turnaroundTime;
-			sum_waiting += p.watingTime;
-
-			job.add(p);
-			count++;
+			ss.close();
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
 		}
-		ss.close();
 
 	}
 
 	public void FCFS() {
+		
 		while (!job.isEmpty() || !ready.isEmpty()) {
 			jobToReady();
 			if (!ready.isEmpty()) {
@@ -97,7 +111,7 @@ public class process {
 				ready.add(job.remove());
 			}
 		}
-		
+
 	}
 
 	public double getAvgT() {
@@ -124,7 +138,7 @@ public class process {
 				while (true) {
 					try {
 						if (countTimer > 2000) {
-							System.out.println("Counter has reached 20000 now will terminate");
+							System.out.println("Counter has reached 2000 now will terminate");
 							timer.cancel();// end the timer
 							break;// end this loop
 						}
@@ -135,6 +149,7 @@ public class process {
 				}
 			}
 		});
+		
 		timer = new Timer("MyTimer");
 		timer.scheduleAtFixedRate(task, 1, 1);
 		t.start();
@@ -142,8 +157,10 @@ public class process {
 		process p = new process();
 		p.read("processes.txt");
 		p.FCFS();
-		System.out.println("the averg = " + p.getAvgT()+" m/s");
-		System.out.println("the averg wating = " + p.getAvWating()+" m/s");
+		System.out.println("The count of processes is "+count);
+		System.out.println("the averg = " + p.getAvgT() + " m/s");
+		System.out.println("the averg wating = " + p.getAvWating() + " m/s");
+		System.out.printf("cpu utilization is: %.2f%%\n ",p.allcpu/(p.allio+p.allcpu)*100);
 	}
 
 }

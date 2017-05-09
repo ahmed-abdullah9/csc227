@@ -8,11 +8,7 @@ public class PCB {
 	public int turnaroundTime;
 	public int watingTime;
 
-	public enum Nature {
-		cpuBound, ioBound,
-	};
-	Nature nature;
-
+	public String Nature;
 	LinkedList<Integer> cpuBurst = new LinkedList<>();;
 	LinkedList<Integer> ioBurst = new LinkedList<>();;
 
